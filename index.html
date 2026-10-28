@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AICTE Security Deposit / FDR Portal</title>
+<style>
+  :root{--navy:#14325c;--accent:#e87722;--bg:#f4f6fa;--card:#fff;--line:#dde3ec;--txt:#1d2733;--mut:#66758a;
+        --ok:#1b8a4b;--warn:#b86e00;--bad:#c0392b;--info:#2563a8}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  header{background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px}
+  header h1{font-size:17px;margin:0;font-weight:600;flex:1}
+  header h1 small{display:block;font-weight:400;opacity:.75;font-size:12px}
+  header .who{font-size:13px;opacity:.9}
+  button,.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 14px;color:var(--txt)}
+  button:hover{background:#eef2f8}
+  .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .primary:hover{background:#cf6a1c}
+  .danger{color:var(--bad);border-color:var(--bad)}
+  header button{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+  main{max-width:1150px;margin:24px auto;padding:0 16px}
+  .login{max-width:360px;margin:80px auto;background:var(--card);padding:28px;border-radius:10px;border:1px solid var(--line)}
+  .login h2{margin-top:0}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+  input,select,textarea{width:100%;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  .hint{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.6}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .n{font-size:24px;font-weight:700}
+  .card .l{font-size:12px;color:var(--mut)}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .bar{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .bar input{max-width:260px}.bar select{max-width:190px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+  th{background:#eef2f8;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+  tr.row{cursor:pointer}tr.row:hover td{background:#f8fafd}
+  .badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+  .Submitted{background:#e3eefa;color:var(--info)}.Verified{background:#e0f3e8;color:var(--ok)}
+  .Rejected{background:#fbe4e1;color:var(--bad)}.Released{background:#e9e9ee;color:#555}
+  .badge.Release,.badge.Requested,.Pending{background:#fdf0d8;color:var(--warn)}
+  .alert{color:var(--bad);font-weight:600;font-size:12px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .modal-bg{position:fixed;inset:0;background:rgba(10,20,40,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;z-index:9}
+  .modal{background:#fff;border-radius:12px;max-width:760px;width:100%;padding:24px}
+  .modal h3{margin:0 0 4px}
+  dl{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;margin:16px 0}
+  dt{color:var(--mut);font-size:13px}dd{margin:0}
+  .tl{border-left:2px solid var(--line);margin:8px 0 0 6px;padding-left:14px}
+  .tl div{margin-bottom:10px;font-size:13px}.tl small{color:var(--mut)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .msg{padding:9px 12px;border-radius:6px;margin:10px 0;font-size:14px}
+  .msg.err{background:#fbe4e1;color:var(--bad)}.msg.ok{background:#e0f3e8;color:var(--ok)}
+  .empty{text-align:center;color:var(--mut);padding:30px}
+  h4{margin:18px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>AICTE – Security Deposit / FDR Portal<small>Streamlined submission, verification &amp; release tracking (prototype)</small></h1>
+  <span class="who" id="who"></span>
+  <button id="logout" style="display:none">Logout</button>
+</header>
+<main id="app"></main>
+
+<script>
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const inr = n => "₹" + Number(n).toLocaleString("en-IN");
+const state = {me:null, tab:"fdrs", status:"", q:"", alertsOnly:false};
+
+async function api(url, opts={}) {
+  if (opts.body && !(opts.body instanceof FormData)) {
+    opts.headers = {"Content-Type":"application/json"}; opts.body = JSON.stringify(opts.body);
+  }
+  const r = await fetch(url, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { if (r.status === 401) { state.me = null; render(); } throw new Error(data.error || "Request failed"); }
+  return data;
+}
+
+async function boot() {
+  try { state.me = await api("/api/me"); } catch { state.me = null; }
+  render();
+}
+
+function render() {
+  const out = $("#logout");
+  if (!state.me) {
+    $("#who").textContent = ""; out.style.display = "none";
+    $("#app").innerHTML = `
+      <form class="login" id="lf">
+        <h2>Sign in</h2>
+        <label>Username</label><input name="username" autofocus required>
+        <label>Password</label><input name="password" type="password" required>
+        <div id="lerr"></div>
+        <p><button class="primary" style="width:100%">Login</button></p>
+        <div class="hint"><b>Demo accounts</b><br>Officer: officer / officer123<br>Institute: rmd / rmd123 &nbsp;or&nbsp; sit / sit123</div>
+      </form>`;
+    $("#lf").onsubmit = async e => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(e.target));
+      try { state.me = await api("/api/login", {method:"POST", body:f}); state.tab = "fdrs"; render(); }
+      catch (x) { $("#lerr").innerHTML = `<div class="msg err">${esc(x.message)}</div>`; }
+    };
+    return;
+  }
+  $("#who").textContent = `${state.me.name} (${state.me.role})`;
+  out.style.display = "";
+  const officer = state.me.role === "officer";
+  $("#app").innerHTML = `
+    <div class="cards" id="stats"></div>
+    <div class="tabs">
+      <button data-t="fdrs" class="${state.tab==="fdrs"?"on":""}">${officer?"All FDRs":"My FDRs"}</button>
+      ${officer ? `<button data-t="reqs" class="${state.tab==="reqs"?"on":""}">Renewal / Release requests</button>` : `<button data-t="new" class="${state.tab==="new"?"on":""}">+ Submit new FDR</button>`}
+    </div>
+    <div id="view"></div>`;
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { state.tab = b.dataset.t; render(); });
+  loadStats();
+  ({fdrs:viewFdrs, reqs:viewReqs, new:viewNew})[state.tab]();
+}
+
+async function loadStats() {
+  const s = await api("/api/stats");
+  const officer = state.me.role === "officer";
+  const c = [[s.total,"Total FDRs"],[inr(s.amount_held),"Deposit currently held"],
+             [s.by_status["Submitted"]||0, "Awaiting verification"],[s.alerts,"Maturity alerts (≤90 days)"]];
+  if (officer) c.push([s.pending_requests,"Pending requests"]);
+  $("#stats").innerHTML = c.map(([n,l]) => `<div class="card"><div class="n">${esc(n)}</div><div class="l">${l}</div></div>`).join("");
+}
+
+async function viewFdrs() {
+  const officer = state.me.role === "officer";
+  $("#view").innerHTML = `
+    <div class="bar">
+      <input id="q" placeholder="Search FDR no, institute, bank…" value="${esc(state.q)}">
+      <select id="st"><option value="">All statuses</option>
+        ${["Submitted","Verified","Rejected","Release Requested","Released"].map(s=>`<option ${state.status===s?"selected":""}>${s}</option>`).join("")}</select>
+      <label style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="al" style="width:auto" ${state.alertsOnly?"checked":""}> Alerts only</label>
+      ${officer ? `<a class="btn" href="/api/export.csv" style="margin-left:auto;text-decoration:none">⬇ Export CSV</a>` : ""}
+    </div><div id="tbl"></div>`;
+  const reload = () => { state.q=$("#q").value; state.status=$("#st").value; state.alertsOnly=$("#al").checked; loadTable(); };
+  $("#q").oninput = debounce(reload, 250); $("#st").onchange = reload; $("#al").onchange = reload;
+  loadTable();
+}
+
+async function loadTable() {
+  const p = new URLSearchParams({q:state.q, status:state.status, alerts:state.alertsOnly?1:0});
+  const rows = await api("/api/fdrs?" + p);
+  const officer = state.me.role === "officer";
+  if (!rows.length) { $("#tbl").innerHTML = `<div class="panel empty">No FDRs found.</div>`; return; }
+  $("#tbl").innerHTML = `<table><thead><tr>
+    ${officer?"<th>Institute</th>":""}<th>FDR No</th><th>Bank</th><th>Amount</th><th>Maturity</th><th>Status</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="row" data-id="${r.id}">
+      ${officer?`<td>${esc(r.institute_name)}<br><small style="color:var(--mut)">${esc(r.aicte_id)}</small></td>`:""}
+      <td>${esc(r.fdr_number)}</td><td>${esc(r.bank)}</td><td>${inr(r.amount)}</td>
+      <td>${esc(r.maturity_date)}${r.alert?`<br><span class="alert">⚠ ${esc(r.alert)} (${r.days_to_maturity}d)</span>`:""}</td>
+      <td><span class="badge ${esc(r.status)}">${esc(r.status)}</span></td></tr>`).join("")}
+    </tbody></table>`;
+  document.querySelectorAll("tr.row").forEach(tr => tr.onclick = () => openDetail(tr.dataset.id));
+}
+
+function viewNew() {
+  $("#view").innerHTML = `<form class="panel" id="nf"><h3 style="margin-top:0">Submit FDR as security deposit</h3>
+    <div class="grid2">
+      <div><label>FDR number *</label><input name="fdr_number" required></div>
+      <div><label>Bank *</label><input name="bank" required></div>
+      <div><label>Branch *</label><input name="branch" required></div>
+      <div><label>Amount (₹) *</label><input name="amount" type="number" min="1" step="any" required></div>
+      <div><label>Interest rate (% p.a.) *</label><input name="interest_rate" type="number" step="0.01" required></div>
+      <div><label>Purpose</label><input name="purpose" value="Security deposit"></div>
+      <div><label>Issue date *</label><input name="issue_date" type="date" required></div>
+      <div><label>Maturity date *</label><input name="maturity_date" type="date" required></div>
+    </div>
+    <label>Scanned FDR copy (PDF / JPG / PNG, max 5 MB) *</label><input name="document" type="file" accept=".pdf,.png,.jpg,.jpeg" required>
+    <div id="nerr"></div><p><button class="primary">Submit for verification</button></p></form>`;
+  $("#nf").onsubmit = async e => {
+    e.preventDefault();
+    try { await api("/api/fdrs", {method:"POST", body:new FormData(e.target)}); state.tab="fdrs"; render(); }
+    catch (x) { $("#nerr").innerHTML = `<div class="msg err">${esc(x.message)}</div>`; }
+  };
+}
+
+async function viewReqs() {
+  const rows = await api("/api/requests");
+  if (!rows.length) { $("#view").innerHTML = `<div class="panel empty">No pending requests 🎉</div>`; return; }
+  $("#view").innerHTML = `<table><thead><tr><th>Institute</th><th>FDR</th><th>Type</th><th>Details</th><th>Raised</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.institute_name)}</td><td>${esc(r.fdr_number)}<br>${inr(r.amount)}</td>
+      <td><span class="badge Pending">${esc(r.type)}</span></td>
+      <td>${r.type==="Renewal" ? `New FDR ${esc(r.payload.new_fdr_number)}<br>till ${esc(r.payload.new_maturity_date)}` : esc(r.note)}</td>
+      <td>${esc(r.created_at)}</td>
+      <td><button data-d="approve" data-id="${r.id}">Approve</button> <button class="danger" data-d="reject" data-id="${r.id}">Reject</button></td></tr>`).join("")}
+    </tbody></table>`;
+  document.querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
+    const remarks = prompt(b.dataset.d === "reject" ? "Reason for rejection (required):" : "Remarks (optional):") ?? null;
+    if (remarks === null) return;
+    try { await api(`/api/requests/${b.dataset.id}/decide`, {method:"POST", body:{decision:b.dataset.d, remarks}}); render(); }
+    catch (x) { alert(x.message); }
+  });
+}
+
+async function openDetail(id) {
+  const d = await api("/api/fdrs/" + id);
+  const officer = state.me.role === "officer";
+  const pending = d.requests.find(r => r.status === "Pending");
+  const bg = document.createElement("div"); bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal">
+    <div style="display:flex;justify-content:space-between"><div><h3>${esc(d.fdr_number)}</h3>
+      <span class="badge ${esc(d.status)}">${esc(d.status)}</span> ${d.alert?`<span class="alert">⚠ ${esc(d.alert)}</span>`:""}</div>
+      <button id="x">✕</button></div>
+    <dl><dt>Institute</dt><dd>${esc(d.institute_name)} (${esc(d.aicte_id)}), ${esc(d.state)}</dd>
+      <dt>Bank / Branch</dt><dd>${esc(d.bank)} – ${esc(d.branch)}</dd>
+      <dt>Amount</dt><dd>${inr(d.amount)} @ ${esc(d.interest_rate)}% p.a.</dd>
+      <dt>Issue → Maturity</dt><dd>${esc(d.issue_date)} → ${esc(d.maturity_date)} (${d.days_to_maturity} days left)</dd>
+      <dt>Purpose</dt><dd>${esc(d.purpose)}</dd>
+      ${d.remarks?`<dt>Officer remarks</dt><dd>${esc(d.remarks)}</dd>`:""}
+      <dt>Document</dt><dd>${d.has_document?`<a href="/files/${d.id}" target="_blank">View scanned FDR</a>`:"–"}</dd></dl>
+    <div id="merr"></div><div class="actions" id="acts"></div>
+    ${d.requests.length?`<h4>Requests</h4>`+d.requests.map(r=>`<div style="font-size:13px;margin-bottom:6px">
+      <span class="badge ${esc(r.status)}">${esc(r.status)}</span> ${esc(r.type)} – ${esc(r.created_at)}
+      ${r.decision_remarks?` · <i>${esc(r.decision_remarks)}</i>`:""}</div>`).join(""):""}
+    <h4>Audit trail</h4><div class="tl">${d.audit.map(a=>`<div><b>${esc(a.action)}</b> <small>by ${esc(a.actor)} · ${esc(a.at)}</small>${a.detail?`<br>${esc(a.detail)}`:""}</div>`).join("")}</div>
+  </div>`;
+  document.body.appendChild(bg);
+  const close = () => { bg.remove(); render(); };
+  $("#x", bg).onclick = close; bg.onclick = e => { if (e.target === bg) close(); };
+  const acts = $("#acts", bg);
+  const add = (label, cls, fn) => { const b = document.createElement("button"); b.textContent = label; b.className = cls||""; b.onclick = fn; acts.appendChild(b); };
+  const run = async (fn) => { try { await fn(); bg.remove(); openDetail(id); } catch (x) { $("#merr", bg).innerHTML = `<div class="msg err">${esc(x.message)}</div>`; } };
+
+  if (officer && d.status === "Submitted") {
+    add("✔ Verify & approve", "primary", () => { const r = prompt("Remarks (optional):"); if (r!==null) run(() => api(`/api/fdrs/${id}/review`, {method:"POST", body:{decision:"approve", remarks:r}})); });
+    add("✖ Reject", "danger", () => { const r = prompt("Reason for rejection (required):"); if (r!==null) run(() => api(`/api/fdrs/${id}/review`, {method:"POST", body:{decision:"reject", remarks:r}})); });
+  }
+  if (!officer && d.status === "Verified" && !pending) {
+    add("Request renewal", "", () => {
+      const no = prompt("New FDR number:"); if (!no) return;
+      const mat = prompt("New maturity date (YYYY-MM-DD):"); if (!mat) return;
+      run(() => api(`/api/fdrs/${id}/request`, {method:"POST", body:{type:"Renewal", new_fdr_number:no, new_maturity_date:mat}}));
+    });
+    add("Request release", "", () => { const n = prompt("Reason for release (e.g. course closure / NOC):"); if (n) run(() => api(`/api/fdrs/${id}/request`, {method:"POST", body:{type:"Release", note:n}})); });
+  }
+  if (!acts.children.length) acts.remove();
+}
+
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+$("#logout").onclick = async () => { await api("/api/logout", {method:"POST"}); state.me = null; render(); };
+boot();
+</script>
+</body>
+</html>

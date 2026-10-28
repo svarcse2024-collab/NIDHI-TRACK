@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NidhiTrack: Security Deposit & FDR Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--surface:#fff;--ink:#14233c;--mute:#5b6b82;--line:#d8dee8;--brand:#0f5c5c;--brand-ink:#fff;--warn:#8a5200;--warn-bg:#fdf0d8;--bad:#b3261e;--bad-bg:#fbe4e2;--ok:#1d6b3a;--ok-bg:#dff3e6;--info:#1f4d80;--info-bg:#e3edf7;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1724;--surface:#172236;--ink:#e6ecf5;--mute:#9aa9bf;--line:#2a3a54;--brand:#4fc3b8;--brand-ink:#06201f;--warn:#f0b04a;--warn-bg:#3a2d12;--bad:#ff8a80;--bad-bg:#3d1b19;--ok:#7bd69a;--ok-bg:#16301f;--info:#9cc4ef;--info-bg:#1c2d46;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1724;--surface:#172236;--ink:#e6ecf5;--mute:#9aa9bf;--line:#2a3a54;--brand:#4fc3b8;--brand-ink:#06201f;--warn:#f0b04a;--warn-bg:#3a2d12;--bad:#ff8a80;--bad-bg:#3d1b19;--ok:#7bd69a;--ok-bg:#16301f;--info:#9cc4ef;--info-bg:#1c2d46;color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{font-size:22px;font-weight:700;letter-spacing:-.01em}.brand small{display:block;font-size:12.5px;font-weight:400;color:var(--mute);letter-spacing:0}
+label{font-size:13px;color:var(--mute);font-weight:500}
+select,input,button{font:inherit;color:var(--ink)}
+select,input[type=text],input[type=number],input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+.who select{width:auto;font-weight:600}
+nav{display:flex;gap:4px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:12px 14px;cursor:pointer;white-space:nowrap;color:var(--mute);font-weight:500}
+nav button.on{color:var(--brand);border-color:var(--brand);font-weight:600}
+main{max-width:1080px;margin:0 auto;padding:20px}
+h2{font-size:19px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.stat b{display:block;font-size:24px;font-weight:700}.stat span{color:var(--mute);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:20px}
+.panel h3{margin:0 0 12px;font-size:16px}
+.ladder{display:grid;gap:10px}
+.rung{display:grid;grid-template-columns:minmax(120px,210px) 1fr;gap:12px;align-items:center}
+.rung .nm{font-size:13px;line-height:1.3}.rung .nm span{color:var(--mute);display:block}
+.track{position:relative;height:26px;border-radius:4px;background:linear-gradient(90deg,transparent calc(25% - 1px),var(--line) calc(25% - 1px) 25%,transparent 25% calc(50% - 1px),var(--line) calc(50% - 1px) 50%,transparent 50% calc(75% - 1px),var(--line) calc(75% - 1px) 75%,transparent 75%),var(--bg)}
+.bar{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:600;min-width:46px;white-space:nowrap}
+.High{background:var(--bad-bg);color:var(--bad)}.Medium{background:var(--warn-bg);color:var(--warn)}.Low{background:var(--ok-bg);color:var(--ok)}.Review{background:var(--info-bg);color:var(--info)}
+.axis{display:grid;grid-template-columns:minmax(120px,210px) 1fr;gap:12px;font-size:12px;color:var(--mute);margin-top:6px}
+.axis div:last-child{display:flex;justify-content:space-between}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:720px}
+th{text-align:left;font-weight:600;color:var(--mute);font-size:13px;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12.5px;font-weight:600}
+.s-Active{background:var(--ok-bg);color:var(--ok)}.s-Pending{background:var(--info-bg);color:var(--info)}
+.s-Refund{background:var(--warn-bg);color:var(--warn)}.s-Released{background:var(--line);color:var(--mute)}.s-Rejected{background:var(--bad-bg);color:var(--bad)}
+.btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer}
+.btn.alt{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.btn.bad{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn.sm{padding:4px 10px;font-size:13px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.f{display:grid;gap:4px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{padding:10px 12px;border-radius:6px;font-size:14px;margin-top:12px}
+.note.bad{background:var(--bad-bg);color:var(--bad)}.note.ok{background:var(--ok-bg);color:var(--ok)}.note.info{background:var(--info-bg);color:var(--info)}
+.item{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border:0}.item small{color:var(--mute);display:block}
+.chat{display:grid;gap:8px;max-height:340px;overflow-y:auto;margin-bottom:12px}
+.m{padding:9px 12px;border-radius:10px;max-width:85%}.m.u{background:var(--brand);color:var(--brand-ink);justify-self:end}.m.b{background:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:5px 12px;cursor:pointer;font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw}
+#toast.on{opacity:1}
+footer{max-width:1080px;margin:0 auto;padding:0 20px 28px;color:var(--mute);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">NidhiTrack<small>Security deposit and FDR portal for AICTE approvals</small></div>
+  <div class="who row"><label for="role">Viewing as</label>
+    <select id="role" onchange="setRole(this.value)">
+      <option value="institution">Institution user</option>
+      <option value="official">AICTE official</option>
+      <option value="admin">Admin</option>
+    </select></div>
+</header>
+<nav id="nav" aria-label="Sections"></nav>
+<main id="main"></main>
+<footer>Prototype with demo data. Document reading, alerts and the assistant are simulated here. The full build uses Firebase AI Logic (Gemini), scheduled Cloud Functions and Firebase Cloud Messaging.</footer>
+<div id="toast" role="status"></div>
+
+<script>
+const MY="ABC Institute of Technology";
+const T=new Date();T.setHours(0,0,0,0);
+const dt=n=>new Date(T.getFullYear(),T.getMonth(),T.getDate()+n).getTime();
+const days=d=>Math.round((d.mat-T.getTime())/864e5);
+const fd=ms=>new Date(ms).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+const inr=n=>"₹"+(n>=1e7?+(n/1e7).toFixed(2)+" crore":+(n/1e5).toFixed(2)+" lakh");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let nid=10;
+let D=[
+{id:1,inst:MY,bank:"State Bank of India",no:"4821 0937",amt:1000000,mat:dt(24),st:"Active"},
+{id:2,inst:MY,bank:"HDFC Bank",no:"5530 1182",amt:500000,mat:dt(75),st:"Active"},
+{id:3,inst:"Sunrise College of Engineering",bank:"Canara Bank",no:"7710 2264",amt:1500000,mat:dt(12),st:"Active"},
+{id:4,inst:"Greenfield Management Institute",bank:"Union Bank of India",no:"3309 8841",amt:800000,mat:dt(58),st:"Active"},
+{id:5,inst:"Lotus Polytechnic",bank:"State Bank of India",no:"9082 5513",amt:300000,mat:dt(210),st:"Active"},
+{id:6,inst:MY,bank:"ICICI Bank",no:"6614 7720",amt:750000,mat:dt(400),st:"Pending"},
+{id:7,inst:"Himalaya Institute of Technology",bank:"Punjab National Bank",no:"2205 6619",amt:1200000,mat:dt(340),st:"Pending"},
+{id:8,inst:"Sunrise College of Engineering",bank:"Bank of Baroda",no:"1187 4402",amt:600000,mat:dt(150),st:"Refund requested"},
+{id:9,inst:"Lotus Polytechnic",bank:"HDFC Bank",no:"8841 3302",amt:400000,mat:dt(-20),st:"Released"}];
+let A=[{t:Date.now()-864e5,who:"System",txt:"Register opened with demo data"}];
+let S={role:"institution",tab:"overview",filter:"all",chat:[{b:1,t:"Hi, I’m the NidhiTrack assistant. Ask me about deposit status, maturity dates or refunds."}]};
+const TABS={institution:[["overview","Overview"],["register","My deposits"],["submit","Submit FDR"],["alerts","Alerts"],["chat","Assistant"]],
+official:[["overview","Overview"],["register","Register"],["review","Reviews"],["alerts","Alerts"],["audit","Audit log"],["chat","Assistant"]],
+admin:[["overview","Overview"],["register","Register"],["alerts","Alerts"],["audit","Audit log"]]};
+const ROLEN={institution:"Institution user",official:"AICTE official",admin:"Admin"};
+const log=txt=>A.unshift({t:Date.now(),who:ROLEN[S.role],txt});
+const scope=()=>S.role==="institution"?D.filter(d=>d.inst===MY):D;
+const live=d=>d.st==="Active"||d.st==="Refund requested";
+const risk=d=>live(d)?(days(d)<=30?"High":days(d)<=90?"Medium":"Low"):d.st==="Pending"?"Review":"–";
+const stc=s=>"s-"+s.split(" ")[0];
+const tag=d=>`<span class="tag ${stc(d.st)}">${d.st}</span>`;
+const rk=d=>risk(d)==="–"?"–":`<span class="tag ${risk(d)}">${risk(d)}</span>`;
+function toast(m){const e=document.getElementById("toast");e.textContent=m;e.className="on";clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="",2600)}
+function setRole(r){S.role=r;if(!TABS[r].some(t=>t[0]===S.tab))S.tab="overview";render()}
+function go(t){S.tab=t;render()}
+
+function overview(){
+ const L=scope(),lv=L.filter(live);
+ const total=lv.reduce((a,d)=>a+d.amt,0),due=lv.filter(d=>days(d)<=30).length;
+ const act=L.filter(d=>d.st==="Pending"||d.st==="Refund requested").length;
+ const rungs=[...lv].sort((a,b)=>a.mat-b.mat).map(d=>{const n=days(d),w=Math.max(0,Math.min(n,120))/120*100;
+  return `<div class="rung"><div class="nm">${S.role==="institution"?esc(d.bank):esc(d.inst)}<span>${esc(d.bank)} · ${inr(d.amt)}</span></div>
+  <div class="track"><div class="bar ${risk(d)}" style="width:${w}%">${n<=0?"Matured":n+" days"}</div></div></div>`}).join("");
+ const urgent=[...L].filter(d=>["High","Medium","Review"].includes(risk(d))).sort((a,b)=>["High","Medium","Review"].indexOf(risk(a))-["High","Medium","Review"].indexOf(risk(b)));
+ return `<h2>${S.role==="institution"?esc(MY):"All institutions"}</h2><p class="sub">Where every deposit stands today, in one view.</p>
+ <div class="stats"><div class="stat"><b>${inr(total)}</b><span>Held in live deposits</span></div>
+ <div class="stat"><b>${lv.length}</b><span>Live FDRs</span></div>
+ <div class="stat"><b>${due}</b><span>Maturing within 30 days</span></div>
+ <div class="stat"><b>${act}</b><span>Waiting for action</span></div></div>
+ <div class="panel"><h3>Maturity ladder</h3>${rungs||"<p class='sub'>No live deposits yet. Submit an FDR to see it here.</p>"}
+ <div class="axis"><div></div><div><span>Today</span><span>30 days</span><span>60 days</span><span>90 days</span><span>120+ days</span></div></div></div>
+ <div class="panel"><h3>Needs attention first</h3>${urgent.length?urgent.map(d=>`<div class="item"><div><b>${esc(d.inst)}</b> · ${esc(d.bank)} ${esc(d.no)}<small>${inr(d.amt)} · matures ${fd(d.mat)}</small></div><div class="row">${tag(d)} ${rk(d)}</div></div>`).join(""):"<p class='sub'>Nothing urgent.</p>"}</div>`;
+}
+function register(){
+ let L=scope();if(S.filter!=="all")L=L.filter(d=>d.st===S.filter);
+ const opts=["all","Active","Pending","Refund requested","Released","Rejected"].map(o=>`<option ${S.filter===o?"selected":""} value="${o}">${o==="all"?"All statuses":o}</option>`).join("");
+ const inst=S.role==="institution";
+ return `<h2>${inst?"My deposits":"Deposit register"}</h2><p class="sub">Every FDR with its bank, amount, maturity date and risk.</p>
+ <div class="row" style="margin-bottom:12px"><label for="flt">Status</label><select id="flt" style="width:auto" onchange="S.filter=this.value;render()">${opts}</select></div>
+ <div class="panel tw" style="padding:6px"><table><thead><tr>${inst?"":"<th>Institution</th>"}<th>Bank</th><th>FDR number</th><th class="n">Amount</th><th>Matures</th><th class="n">Days left</th><th>Status</th><th>Risk</th>${inst?"<th></th>":""}</tr></thead><tbody>
+ ${L.map(d=>`<tr>${inst?"":`<td>${esc(d.inst)}</td>`}<td>${esc(d.bank)}</td><td>${esc(d.no)}</td><td class="n">${inr(d.amt)}</td><td>${fd(d.mat)}</td><td class="n">${live(d)?days(d):"–"}</td><td>${tag(d)}</td><td>${rk(d)}</td>${inst?`<td>${d.st==="Active"?`<button class="btn alt sm" onclick="reqRefund(${d.id})">Request release</button>`:""}</td>`:""}</tr>`).join("")||`<tr><td colspan="9">No deposits match this filter.</td></tr>`}</tbody></table></div>`;
+}
+function submitV(){
+ return `<h2>Submit an FDR</h2><p class="sub">Upload the document and the portal reads the details for you to confirm.</p>
+ <div class="panel"><div class="grid">
+ <div class="f"><label for="fl">FDR document (image or PDF)</label><input id="fl" type="file" accept="image/*,.pdf"></div>
+ <div class="f"><label>&nbsp;</label><button class="btn alt" onclick="ocr()">Read details from document</button></div></div>
+ <div id="ocrmsg"></div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+ <div class="grid">
+ <div class="f"><label>Institution</label><input type="text" value="${esc(MY)}" readonly></div>
+ <div class="f"><label for="bk">Bank</label><input id="bk" type="text"></div>
+ <div class="f"><label for="no">FDR number</label><input id="no" type="text"></div>
+ <div class="f"><label for="am">Amount (₹)</label><input id="am" type="number" min="1"></div>
+ <div class="f"><label for="mt">Maturity date</label><input id="mt" type="date"></div></div>
+ <div id="subm"></div>
+ <p style="margin:16px 0 0"><button class="btn" onclick="submitFdr()">Submit for verification</button></p></div>`;
+}
+const SAMPLES=[["Punjab & Sind Bank","6150 3827",900000,400],["Axis Bank","7342 1098",1100000,365],["Kotak Mahindra Bank","2918 5546",650000,500]];let si=0;
+function ocr(){
+ const f=document.getElementById("fl").files[0],m=document.getElementById("ocrmsg");
+ if(!f){m.innerHTML='<div class="note bad">Choose a document first, then read it.</div>';return}
+ m.innerHTML='<div class="note info">Reading '+esc(f.name)+'…</div>';
+ setTimeout(()=>{const s=SAMPLES[si++%SAMPLES.length],d=new Date(dt(s[3]));
+  bk.value=s[0];no.value=s[1];am.value=s[2];
+  mt.value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  m.innerHTML='<div class="note ok">Details filled in from the document. Check them before you submit.</div>'},900)}
+function submitFdr(){
+ const m=document.getElementById("subm"),b=bk.value.trim(),n=no.value.trim(),a=+am.value,t=mt.value;
+ if(!b||!n||!a||!t){m.innerHTML='<div class="note bad">Fill in the bank, FDR number, amount and maturity date.</div>';return}
+ const key=x=>x.replace(/\s/g,"").toLowerCase();
+ if(D.some(d=>key(d.no)===key(n))){m.innerHTML='<div class="note bad">Duplicate found: FDR number '+esc(n)+' is already in the register. Check the number or contact AICTE.</div>';return}
+ const mat=new Date(t+"T00:00:00").getTime();
+ if(mat<=T.getTime()){m.innerHTML='<div class="note bad">The maturity date must be after today.</div>';return}
+ D.push({id:nid++,inst:MY,bank:b,no:n,amt:a,mat,st:"Pending"});
+ log("Submitted FDR "+n+" ("+b+", "+inr(a)+") for verification");toast("FDR submitted for verification");S.tab="register";render()}
+function reqRefund(id){const d=D.find(x=>x.id===id);d.st="Refund requested";log("Requested release of FDR "+d.no);toast("Release requested");render()}
+function review(){
+ const p=D.filter(d=>d.st==="Pending"),r=D.filter(d=>d.st==="Refund requested");
+ return `<h2>Reviews</h2><p class="sub">Verify new FDRs and decide on release requests.</p>
+ <div class="panel"><h3>New FDRs to verify (${p.length})</h3>${p.map(d=>`<div class="item"><div><b>${esc(d.inst)}</b><small>${esc(d.bank)} · ${esc(d.no)} · ${inr(d.amt)} · matures ${fd(d.mat)}</small></div>
+ <div class="row"><input type="text" id="rm${d.id}" placeholder="Remark (needed to reject)" style="width:190px"><button class="btn sm" onclick="verify(${d.id},1)">Approve</button><button class="btn bad sm" onclick="verify(${d.id},0)">Reject</button></div></div>`).join("")||"<p class='sub'>No FDRs waiting. You’re up to date.</p>"}</div>
+ <div class="panel"><h3>Release requests (${r.length})</h3>${r.map(d=>`<div class="item"><div><b>${esc(d.inst)}</b><small>${esc(d.bank)} · ${esc(d.no)} · ${inr(d.amt)}</small></div>
+ <div class="row"><button class="btn sm" onclick="release(${d.id},1)">Approve release</button><button class="btn bad sm" onclick="release(${d.id},0)">Decline</button></div></div>`).join("")||"<p class='sub'>No release requests.</p>"}</div>`;
+}
+function verify(id,ok){const d=D.find(x=>x.id===id),r=document.getElementById("rm"+id).value.trim();
+ if(!ok&&!r){toast("Add a remark to reject");return}
+ d.st=ok?"Active":"Rejected";log((ok?"Approved":"Rejected")+" FDR "+d.no+(r?" (“"+r+"”)":""));toast(ok?"FDR approved":"FDR rejected");render()}
+function release(id,ok){const d=D.find(x=>x.id===id);d.st=ok?"Released":"Active";log((ok?"Approved release of":"Declined release of")+" FDR "+d.no);toast(ok?"Deposit released":"Request declined");render()}
+function alertsV(){
+ const L=scope().filter(d=>live(d)&&days(d)<=90).sort((a,b)=>a.mat-b.mat);
+ return `<h2>Maturity alerts</h2><p class="sub">FDRs reaching the 90, 60 or 30 day mark. The daily check sends a push notification and an email to the institution and the AICTE official.</p>
+ ${S.role==="institution"?"":`<p><button class="btn" onclick="runAlerts()">Run daily check now</button></p>`}
+ <div class="panel">${L.map(d=>{const n=days(d),b=n<=30?30:n<=60?60:90;return `<div class="item"><div><b>${esc(d.inst)}</b> · ${esc(d.bank)} ${esc(d.no)}<small>${inr(d.amt)} · matures ${fd(d.mat)} · ${n} days left</small></div>
+ <div class="row"><span class="tag ${b===30?"High":b===60?"Medium":"Low"}">${b} day alert</span>${d.al===b?'<span class="tag s-Active">Sent</span>':'<span class="tag s-Released">Not sent</span>'}</div></div>`}).join("")||"<p class='sub'>No FDRs are within 90 days of maturity.</p>"}</div>`;
+}
+function runAlerts(){let c=0;D.filter(d=>live(d)&&days(d)<=90).forEach(d=>{const n=days(d),b=n<=30?30:n<=60?60:90;
+ if(d.al!==b){d.al=b;c++;log("Alert sent: "+d.inst+", FDR "+d.no+" matures in "+n+" days (push and email)")}});
+ toast(c?c+" alerts sent":"All alerts already sent");render()}
+function audit(){return `<h2>Audit log</h2><p class="sub">Every action, with who did it and when.</p><div class="panel tw" style="padding:6px"><table><thead><tr><th>Time</th><th>By</th><th>Action</th></tr></thead><tbody>
+ ${A.map(a=>`<tr><td style="white-space:nowrap">${new Date(a.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(a.who)}</td><td>${esc(a.txt)}</td></tr>`).join("")}</tbody></table></div>`}
+function chatV(){
+ const ch=["What is my deposit status?","Which FDR matures next?","How much is held in deposits?","How do I get a refund?"];
+ return `<h2>Assistant</h2><p class="sub">Ask a question in plain words.</p><div class="panel">
+ <div class="chips">${ch.map(c=>`<button onclick="ask(this.textContent)">${c}</button>`).join("")}</div>
+ <div class="chat" id="chat">${S.chat.map(m=>`<div class="m ${m.b?"b":"u"}">${esc(m.t)}</div>`).join("")}</div>
+ <div class="row"><input type="text" id="q" placeholder="Type your question" style="flex:1" onkeydown="if(event.key==='Enter')ask()"><button class="btn" onclick="ask()">Ask</button></div></div>`}
+function ask(t){const q=(t||document.getElementById("q").value).trim();if(!q)return;
+ const L=scope(),lv=L.filter(live),s=q.toLowerCase();let a;
+ if(/matur|expire|due|next/.test(s)){const n=[...lv].sort((x,y)=>x.mat-y.mat)[0];a=n?`The next maturity is ${n.inst}’s ${n.bank} FDR ${n.no}: ${inr(n.amt)} on ${fd(n.mat)}, ${days(n)} days from today.`:"There are no live deposits."}
+ else if(/refund|release|return/.test(s))a="Open My deposits, pick an Active FDR and choose Request release. An AICTE official reviews it and the status changes to Released once approved. "+L.filter(d=>d.st==="Refund requested").length+" release request(s) are waiting now.";
+ else if(/total|amount|how much|held/.test(s))a="Live deposits total "+inr(lv.reduce((x,d)=>x+d.amt,0))+" across "+lv.length+" FDRs.";
+ else if(/alert|remind|notif/.test(s))a="Alerts go out 90, 60 and 30 days before maturity, by push notification and email.";
+ else if(/status|deposit|fdr/.test(s)){const c=k=>L.filter(d=>d.st===k).length;a=`${c("Active")} active, ${c("Pending")} awaiting verification, ${c("Refund requested")} with a release request, ${c("Released")} released.`}
+ else a="I can answer questions about status, maturity dates, totals, alerts and refunds.";
+ S.chat.push({t:q},{b:1,t:a});render();const c=document.getElementById("chat");if(c)c.scrollTop=c.scrollHeight}
+const VIEWS={overview,register,submit:submitV,review,alerts:alertsV,audit,chat:chatV};
+function render(){
+ document.getElementById("nav").innerHTML=TABS[S.role].map(t=>`<button class="${S.tab===t[0]?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("");
+ document.getElementById("main").innerHTML=VIEWS[S.tab]();document.getElementById("role").value=S.role}
+render();
+</script>
+</body>
+</html>
